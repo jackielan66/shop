@@ -10,7 +10,26 @@
             </div>
             <span class="S1" @click="$router.back()">取消</span>
         </div>
+        <div class="ziying" v-infinite-scroll="loadMore" infinite-scroll-disabled="loading" infinite-scroll-distance="20">
+            <ul>
+                <li v-for="(item,index) in GoodsList" :key="index">
+                    <router-link v-bind:to="'details/'+item.gid">
+                        <div class="img_box">
+                            <img v-lazy="WWW +'/' + item.mainPic" />
+                        </div>
+                        <div class="text_p">
+                            <p class="C3">{{item.title}}</p>
+                        </div>
+                        <div class="money">
+                            <span class="C1 S1 none-lith">
+                                <em class="S6">￥</em>{{item.discountprice}}</span>
+                        </div>
+                    </router-link>
+                </li>
 
+            </ul>
+            <div class="clearfix"></div>
+        </div>
         <!-- <div class="hot-search">
             <h3 class="S5 C3">热搜</h3>
             <span class="S5 C3">大红袍</span>
@@ -60,8 +79,7 @@ export default {
 
   data() {
     return {
-      topImg: "",
-      goodsList: [],
+      GoodsList: [],
       WWW,
       loading: true,
       keyword: ""
@@ -80,8 +98,7 @@ export default {
       .then(res => {
         Indicator.close();
         let _data = res.data.data;
-        this.goodsList = _data.goods;
-        this.topImg = _data.topImg;
+        this.GoodsList = _data;
         this.loading = false;
       });
   },
@@ -97,8 +114,7 @@ export default {
         .then(res => {
           Indicator.close();
           let _data = res.data.data;
-          this.goodsList = _data.goods;
-          this.topImg = _data.topImg;
+          this.GoodsList = _data;
           this.loading = false;
         });
     },

@@ -166,6 +166,10 @@ export default {
   mounted() {
     this.goodsDetails = this.$route.params.goodsDetails;
     this.order = this.$route.params.order;
+    if(this.order == null){
+        this.$route
+        return
+    }
     this.amount = (this.order.num * this.goodsDetails.discountprice).toFixed(2);
     let _params = {
       uid
@@ -211,7 +215,9 @@ export default {
       axios.get(URI + "/pay/goodsPay?" + qs.stringify(_params)).then(res => {
         Indicator.close();
         let _data = res.data;
-
+        if(_data.success){
+            this.$route.push('/my-order')
+        }
         Toast(_data.msg);
 
         // this.GoodsList = _data.pages;

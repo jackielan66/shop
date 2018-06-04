@@ -2,14 +2,15 @@
 
     <div id="cart">
         <mt-header title="购物车" fixed>
-            <mt-button slot="right" @click="$router.back()">编辑</mt-button>
+            <mt-button v-if="cartStatus===false" slot="right" @click="onEdit(true)">编辑</mt-button>
+            <mt-button v-else slot="right" @click="onEdit(false)">完成</mt-button>
         </mt-header>
 
         <div class="box">
             <div class="cart-table" v-for="(item,index) in cartGoodList" :key="index">
                 <div class="cart-box">
                     <div class="cart-heard">
-                        <div class="choice">
+                        <div class="choice" @click="toggleBrand(item)">
                             <img src="static/img/choice-off@2x.png" alt="">
                             <img class="display-none" src="static/img/choice-on@2x.png" alt="">
                         </div>
@@ -18,13 +19,12 @@
                             <span class="C3 S4">{{item.brand}}</span>
                         </div>
                     </div>
-                    <div class="goods-inf" v-for="(cart,index) in item.goods" :key="index" >
-                        <div class="choice">
-                            <img src="static/img/choice-off@2x.png" alt="">
-                            <img class="display-none" src="static/img/choice-on@2x.png" alt="">
+                    <div class="goods-inf" v-for="(cart,index) in item.goods" :key="index">
+                        <div class="choice" @click="onCartClick(cart)">
+                            <img v-bind:src="toggleSelectIcon(cart)" alt="">
                         </div>
                         <div class="goods-img">
-                            <img v-lazy="WWW + '/' + cart.img" alt=""/>
+                            <img v-lazy="WWW + '/' + cart.img" alt="" />
                         </div>
                         <div class="goods-text">
                             <h2 class="C3 S5">
@@ -35,41 +35,40 @@
                             <div class="number">
                                 <span class="C9 S1 fl-l">
                                     <em class="S5">¥</em>{{cart.price}}</span>
-                                <div class="number-btn fl-r">
-                                    <img src="static/img/btn_jian@2x.png" alt="">
+                                <div class="number-btn fl-r" v-show="cartStatus == false" >
+                                    <img @click="changeNum('-',item.bid,cart.cardId,index)" src="static/img/btn_jian@2x.png" alt="">
                                     <span class="S4 C3">{{cart.num}}</span>
-                                    <img src="static/img/btn_jia@2x.png" alt="">
+                                    <img @click="changeNum('+',item.bid,cart.cardId,index)" src="static/img/btn_jia@2x.png" alt="">
                                 </div>
 
                             </div>
                         </div>
                     </div>
-         
+
                 </div>
             </div>
         </div>
 
-        <div class="bottom-settl">
-            <div class="choice fl-l width-70">
-                <img src="static/img/choice-off@2x.png" alt="">
-                <img class="display-none" src="static/img/choice-on@2x.png" alt="">
-                <span class="C3 S2">全选</span>
+        <div class="bottom-settl" v-if="cartStatus === false">
+            <div class="choice fl-l width-70" @click="toggleCheckAll()">
+                <img v-bind:src="'static/img/choice-' + (isCheckAll ? 'on':'off') +'@2x.png'" alt="">
+                <span class="C3 S2"> {{isCheckAll ? '全不选' : '全选'}}</span>
                 <span class="S2 C3 fl-r margin-right-5px">总记：
                     <em class="C9 S5">¥</em>
-                    <em class="C9 S1">913.99</em>
+                    <em class="C9 S1">{{totalAmount}}</em>
                 </span>
             </div>
-            <div class="btn fl-r">
+            <div class="btn fl-r" @click="submit">
                 <span class="C4 S1">结算</span>
             </div>
             <div class="clearfix"></div>
         </div>
-        <div class="bottom-settl display-none">
-            <div class="choice fl-l width-70">
-                <img src="static/img/choice-off@2x.png" alt="">
-                <span class="C3 S2">全选</span>
+        <div class="bottom-settl" v-if="cartStatus">
+            <div class="choice fl-l width-70" @click="toggleCheckAll()">
+                <img v-bind:src="'static/img/choice-' + (isCheckAll ? 'on':'off') +'@2x.png'" alt="">
+                <span class="C3 S2"> {{isCheckAll ? '全不选' : '全选'}}</span>
             </div>
-            <div class="btn fl-r">
+            <div class="btn fl-r" @click="delCart">
                 <span class="C4 S1">删除</span>
             </div>
             <div class="clearfix"></div>
@@ -103,6 +102,7 @@ import { URI, WWW } from "@/apiConfig";
 import axios from "axios";
 import TabBar from "./TabBar";
 import qs from "qs";
+import { remove } from "lodash";
 Vue.use(Lazyload);
 Vue.use(InfiniteScroll);
 let uid = `1fb004b2cbe54c0b92bcab3cb58ad9c3`;
@@ -114,8 +114,23 @@ export default {
       cartGoodList: [],
       WWW,
       uid,
-      loading: false
+      loading: false,
+      cartStatus: false, // 购物车是否在编辑状态
+      selectedCartId: [],
+      selectedCartData: [], // 勾选购物车的数据
+      isCheckAll: false
     };
+  },
+
+  computed: {
+    brandIsCheck(item) {},
+    totalAmount() {
+      let _amount = 0;
+      this.selectedCartData.forEach(v => {
+        _amount += v.num * v.price;
+      });
+      return _amount.toFixed(2);
+    }
   },
 
   created() {},
@@ -134,69 +149,200 @@ export default {
   },
 
   methods: {
-    toggleMenu() {
-      this.isMenuShow = !this.isMenuShow;
-    },
-
-    onFirstMenuClick(firstMenu) {
-      let _params = { cid: firstMenu.cid };
-      this.cid = _params.cid;
-      axios
-        .get(URI + "/goods/getCategoryLeaf?" + qs.stringify(_params))
-        .then(res => {
-          let _data = res.data.data;
-          this.towLevelMenu = _data;
-        });
-    },
-
-    onSecondMenuClick(secondMenu) {
-      this.isMenuShow = false;
-      let _params = { clid: secondMenu.clid };
-      if (secondMenu.clid == this.clid) {
-        return;
-      }
-      this.clid = _params.clid;
-      this.pageIndex = 1;
-      this.GoodsList = [];
-      this.fetchData();
-    },
-
     fetchData() {
       let _params = {
-        pageIndex: this.pageIndex,
-        pageSize: this.pageSize
+        uid: this.uid
       };
-      if (Math.ceil(this.totalCount / this.pageSize) < this.pageIndex - 1) {
-        this.loading = false;
-        Toast(`已经是最后一页啦`);
+      // 初始化购物车列表
+      axios.get(URI + "/cart/intoCart?" + qs.stringify(_params)).then(res => {
+        Indicator.close();
+        let _data = res.data.data;
+        this.cartGoodList = _data;
+
+        let _selectedCartData = [];
+        this.cartGoodList.forEach(v => {
+          v.goods.map(cart => {
+            this.selectedCartId.forEach(item => {
+              if (item == cart.cardId) {
+                _selectedCartData.push(cart);
+              }
+            });
+          });
+        });
+        this.selectedCartData = _selectedCartData;
+      });
+    },
+
+    onEdit(status) {
+      this.cartStatus = status;
+    },
+
+    changeNum(type, bid, cartId, index) {
+      //   console.log(bid, "bid");
+      //   console.log(cartId, "cartId");
+      //   console.log(index, "index");
+      let mapObj = this.cartGoodList.find(v => {
+        return v.bid === bid;
+      });
+      let mapGood = mapObj.goods[index];
+      if (mapGood.cardId !== cartId) {
+        Toast("操作有误，请重新刷新页面操作");
         return;
       }
-      if (this.clid >= 0) {
-        _params.clid = this.clid;
+
+      if (type == "-") {
+        if (mapGood.num == 1) {
+          Toast(`最少数量必须为 0 `);
+          return;
+        }
+        mapGood.num--;
+      } else if (type == "+") {
+        mapGood.num++;
       }
-      Indicator.open();
+      let _params = {
+        cartId: cartId,
+        num: mapGood.num
+      };
+      axios.get(URI + "/cart/modifyNum?" + qs.stringify(_params)).then(res => {
+        this.fetchData();
+      });
+    },
+
+    onCartClick(cart) {
+      let _index = -1;
+      let selectedCartId = this.selectedCartId;
+      let selectedCartData = this.selectedCartData;
+      selectedCartId.map((v, index) => {
+        if (v == cart.cardId) {
+          _index = index;
+        }
+      });
+      if (_index >= 0) {
+        selectedCartId.splice(_index, 1);
+        selectedCartData.splice(_index, 1);
+      } else {
+        selectedCartId = selectedCartId.concat(cart.cardId);
+        selectedCartData = selectedCartData.concat(cart);
+      }
+      this.selectedCartId = selectedCartId;
+      this.selectedCartData = selectedCartData;
+    },
+
+    delCart() {
+      if (this.cartStatus === false) {
+        // 购物车不是编辑状态
+        Toast(`操作有误，请重新点击编辑按钮`);
+        return;
+      }
+      if (this.selectedCartId.length == 0) {
+        // 购物车不是编辑状态
+        Toast(`操作有误，未勾选商品`);
+        return;
+      }
+      let _params = {
+        cartIds: this.selectedCartId.join(",")
+      };
       axios
-        .get(URI + "/goods/getGoodsByclId?" + qs.stringify(_params))
+        .get(URI + "/cart/delCartGoods?" + qs.stringify(_params))
         .then(res => {
-          Indicator.close();
-          let _data = res.data.data;
-          this.totalCount = _data.totalCount;
-          this.GoodsList = this.GoodsList.concat(_data.pages);
-          this.loading = false;
+          let _data = res.data;
+          if (_data.success) {
+            this.fetchData();
+            this.selectedCartId = [];
+          }
+          Toast(_data.msg);
         });
+    },
+
+    toggleSelectIcon(cart) {
+      let isChecked = this.selectedCartId.some(v => v == cart.cardId);
+      if (isChecked) {
+        return "static/img/choice-on@2x.png";
+      } else {
+        return "static/img/choice-off@2x.png";
+      }
+    },
+
+    submit() {
+      // 结算
+      if (this.selectedCartId.length == 0) {
+        Toast(`请勾选要结算的产品`);
+        return;
+      }
+      // Indicator.open()
+      // axios
+      // .get(URI + "/cart/delCartGoods?" + qs.stringify(_params))
+      // .then(res => {
+      //     Indicator.open()
+      //   let _data = res.data;
+      //   if (_data.success) {
+      //     this.fetchData();
+      //     this.selectedCartId = [];
+      //   }
+      //   Toast(_data.msg);
+      // });
+    },
+
+    toggleCheckAll() {
+        // 全选 / 全不选
+      this.isCheckAll = !this.isCheckAll;
+      if (this.isCheckAll) {
+        let _selectedCartId = [];
+        let _selectedCartData = [];
+        this.cartGoodList.forEach(v => {
+          v.goods.map(item => {
+            _selectedCartId.push(item.cardId);
+            _selectedCartData.push(item);
+          });
+        });
+        this.selectedCartId = _selectedCartId;
+        this.selectedCartData = _selectedCartData;
+      } else {
+        this.selectedCartId = [];
+        this.selectedCartData = [];
+      }
+    },
+
+    toggleBrand(item) {
+        // 选择品牌全选、全不选
+      console.log(item);
+      let _selectedCartId = this.selectedCartId.concat([]);
+      let _selectedCartData = [];
+      let _chooseItemLength = 0; // 该条购物车下已经勾选多少条
+      const _maxGoodsLenght = item.goods; // 本购物id的购车数量
+
+      item.goods.forEach((v, index) => {
+        if (this.selectedCartId.length == 0) {
+          _selectedCartId.push(v.cardId);
+          _chooseItemLength = _maxGoodsLenght;
+        } else {
+          let index = -1;
+          let _isHasKeyInArray = this.selectedCartId.some((o, index) => {
+            if (o == v.cardId) {
+              index = index;
+            }
+            return o == v.cardId;
+          });
+          if (_isHasKeyInArray) {
+          } else {
+            _selectedCartId.push(v.cardId);
+          }
+          //   this.selectedCartId.forEach((selectedId, J) => {
+          //     if (v.cardId == selectedId) {
+          //     } else {
+          //       _selectedCartId.push(v.cardId);
+          //     }
+          //   });
+        }
+      });
+      this.selectedCartId = _selectedCartId;
+      console.log(_selectedCartId, "_selectedCartId");
     },
 
     loadMore() {
       this.loading = true;
       this.pageIndex = this.pageIndex + 1;
       this.fetchData();
-      // setTimeout(() => {
-      //   let last = this.list[this.list.length - 1];
-      //   for (let i = 1; i <= 10; i++) {
-      //     this.list.push(last + i);
-      //   }
-      //   this.loading = false;
-      // }, 2500);
     }
   },
 
