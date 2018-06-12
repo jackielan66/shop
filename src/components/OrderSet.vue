@@ -8,19 +8,23 @@
         <div class="add-add">
             <div class="add-box">
                 <img src="static/img/add@2x.png" alt="">
-                <div class="add">
+
+                <div class="add" v-show="defaultAddress.addressId">
                     <span>
                         <em>收件人：</em>{{defaultAddress.name}}</span>
                     <span>{{defaultAddress.phone}}</span>
                     <p class="C3 S2">{{defaultAddress.area + ' ' +defaultAddress.detail }}</p>
                 </div>
-                <div class="add-1 display-none">
-                    <span class="C3 S7">请填写收货地址</span>
+
+                <div class="add-1" v-show="!defaultAddress.addressId">
+                    <span @click="$router.push('/address-edit')" class="C3 S7">
+                        请填写收货地址
+                    </span>
                 </div>
-                <img class="add-next" src="img/icon_next@2x.png" alt="">
+                <img @click="defaultAddress.addressId ? $router.push('/address') : $router.push('/address-edit') " class="add-next" src="static/img/icon_next@2x.png" alt="">
             </div>
         </div>
-        <div class="order-table">
+        <div class="order-table" v-if="showBuyType=='brand'">
             <div class="order-box">
                 <div class="header">
                     <div class="company-name">
@@ -51,7 +55,7 @@
                     </div>
                     <div class="clearfix"></div>
                     <span class="money S10 C3">¥
-                        <em class="S4">{{goodsDetails.discountprice}}</em>
+                        <em class="S4">{{goodsDetails.price}}</em>
                     </span>
                 </div>
             </div>
@@ -72,6 +76,69 @@
                 <label class="C3 S4">买家留言：</label>
                 <input class="C3 S4" v-model="feedback" type="text" placeholder="选填：填写内容已和卖家协商确认" name="">
             </div>
+        </div>
+
+        <!-- 购物车列表 -->
+        <div v-if="showBuyType=='cart'">
+            <div class="order-table" v-for="(item,index) in selectedCartData" :key="index">
+                <div class="order-box">
+                    <div class="header">
+                        <div class="company-name">
+                            <img src="static/img/icon_Supermarket@2x.png" alt="">
+                            <span class="S4 C3">{{item.brand}}</span>
+                        </div>
+                        <span class="C9 S4">待付款</span>
+                    </div>
+                    <div class="clearfix"></div>
+                    <div class="inftion">
+                        <div class="img-box" v-if="item.img">
+                            <img v-lazy="WWW + '/' + item.img" alt="" />
+                        </div>
+                        <div class="text-box">
+                            <h2 class="C3 S5">
+                                <span class="order-label1">品牌</span>{{item.title}}</h2>
+                            <div class="shux-box">
+                                <div class="span-box">
+                                    <span class="C2 S10">560ML</span>
+                                </div>
+                                <div class="number-box">
+                                    <span class="C3 S6">x
+                                        <em class="S10">{{item.num}}</em>
+                                    </span>
+                                </div>
+                                <div class="clearfix"></div>
+                            </div>
+                        </div>
+                        <div class="clearfix"></div>
+                        <span class="money S10 C3">¥
+                            <em class="S4">{{item.price}}</em>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 留言开始 -->
+            <div class="order-table">
+                <div class="cost">
+                    <span class="fl-l S4 C3">邮费</span>
+                    <span class="fl-r S4 C3">
+                        <em class="S10">¥</em>10.00</span>
+                    <div class="clearfix"></div>
+                </div>
+                <!-- <div class="cost">
+                    <span class="fl-l S4 C3">共
+                        <em>{{selectedCartId.length}}</em>件商品</span>
+                    <span class="fl-r S4 C3">小记：
+                        <em class="S10">¥</em>{{cartAmount|fmoney}}</span>
+                    <div class="clearfix"></div>
+                </div> -->
+                <div class="cost">
+                    <label class="C3 S4">买家留言：</label>
+                    <input class="C3 S4" v-model="feedback" type="text" placeholder="选填：填写内容已和卖家协商确认" name="">
+                </div>
+            </div>
+            <!-- 留言结束 -->
+
         </div>
 
         <div class="payment">
@@ -98,27 +165,30 @@
             </div>
         </div>
 
-        <!-- <div class="black_bg display-block"></div> -->
+        <div class="black_bg" v-show="usePayPassword" @click="usePayPassword=false"></div>
 
-        <!-- <div class="click-set text-center">
+        <div class="click-set text-center" v-if="usePayPassword">
             <div class="pick-up C4 S3">
-               请输入支付密码
+                请输入支付密码
             </div>
-            <span class=" C9 S5">¥<em class="S7">369.00</em></span>
-            <form class="input-box">
-                <input readonly type="password" maxlength="1" disabled="disabled">
-                <input readonly type="password" maxlength="1" disabled="disabled">
-                <input readonly type="password" maxlength="1" disabled="disabled">
-                <input readonly type="password" maxlength="1" disabled="disabled">
-                <input readonly type="password" maxlength="1" disabled="disabled">
-                <input readonly type="password" maxlength="1" disabled="disabled">
-            </form>
-       </div> -->
+            <span class=" C9 S5">¥
+                <em class="S7">{{ (showBuyType=='brand'? amount : cartAmount) | fmoney}}</em>
+            </span>
+            <pay-check @usePasswordPayCallback="usePasswordPayCallback"></pay-check>
+            <!-- <form class="input-box">
+                <input readonly type="password" maxlength="1" >
+                <input readonly type="password" maxlength="1">
+                <input readonly type="password" maxlength="1">
+                <input readonly type="password" maxlength="1">
+                <input readonly type="password" maxlength="1">
+                <input readonly type="password" maxlength="1">
+            </form> -->
+        </div>
 
         <div class="bottom-btn">
             <div class="money">
                 <span class="S1 C2">合计：
-                    <em class="C1">￥{{amount}}</em>
+                    <em class="C1">￥{{ (showBuyType=='brand'? amount : cartAmount) | fmoney}}</em>
                 </span>
             </div>
             <div class="btn" @click="sumbit">
@@ -138,9 +208,11 @@ import {
   InfiniteScroll
 } from "mint-ui";
 import Vue from "vue";
-import { URI, WWW, uid } from "@/apiConfig";
+import { URI, WWW, getToken } from "@/apiConfig";
 import axios from "axios";
 import TabBar from "./TabBar";
+import PayCheck from "./PayCheck";
+
 import qs from "qs";
 Vue.use(Lazyload);
 Vue.use(InfiniteScroll);
@@ -154,88 +226,177 @@ export default {
       order: {},
       WWW,
       loading: true,
-      uid,
+      uid:getToken(),
       amount: 0,
       payType: 1,
-      feedback: ""
+      feedback: "",
+      showBuyType: "brand",
+      selectedCartData: [],
+      selectedCartId: [],
+      cartAmount: 0,
+      usePayPassword: false
     };
+  },
+
+  computed: {},
+
+  filters: {
+    fmoney: num => {
+      return (num || 0).toFixed(2);
+    }
   },
 
   created() {},
 
   mounted() {
-    this.goodsDetails = this.$route.params.goodsDetails;
-    this.order = this.$route.params.order;
-    if(this.order == null){
-        this.$route
-        return
-    }
-    this.amount = (this.order.num * this.goodsDetails.discountprice).toFixed(2);
+    window.scrollTo(0,0);
     let _params = {
-      uid
-      //   name:'收货地址陈总',
-      //   phone:15960061702,
-      //   area:' 福建省的啊',
-      //   detail:' 福建省的1313123啊',
-      //   defaultAddress:1
+      uid:this.uid
     };
-
-    // axios
-    //   .get(URI + "/address/addAddress?" + qs.stringify(_params))
-    //   .then(res => {
-    //     Indicator.close();
-    //     // let _data = res.data.data;
-    //     // this.GoodsList = _data.pages;
-    //     // this.totalCount = _data.totalCount;
-    //     // this.loading = false;
-    //   });
-
-    // 初始化商地址
+    // 初始化默认地址
     axios
       .get(URI + "/address/getDefaultAddress?" + qs.stringify(_params))
       .then(res => {
         let _data = res.data.data;
-        this.defaultAddress = _data;
+        this.defaultAddress = _data || {};
       });
+    let params = window.localStorage.getItem("order");
+    if (params) {
+      params = JSON.parse(params);
+    }
+    this.showBuyType = params.type;
+    if (params.type == "brand") {
+      this.goodsDetails = params.goodsDetails;
+      this.order = params.order;
+      if (this.order == null) {
+        this.$route.back();
+        return;
+      }
+      this.amount = this.order.num * this.goodsDetails.price;
+    } else if (params.type == "cart") {
+      this.selectedCartData = params.selectedCartData;
+      this.selectedCartId = params.selectedCartId;
+      let _amount = 0;
+      (this.selectedCartData || []).map(v => {
+        _amount += v.num * v.price;
+      });
+      this.cartAmount = _amount;
+      //   console.log(this.selectedCartData, "selectedCartData");
+      //   console.log(this.selectedCartId, "selectedCartId");
+    }
   },
 
   methods: {
     onPayTypeChange(type) {
       this.payType = type;
     },
-    sumbit() {
-      console.log(this.order, "order");
-      let _params = Object.assign(
-        this.order,
-        { type: this.payType },
-        { message: this.feedback },
-        { addressId: "394b8dedf7e9468fb91380661dd963ce" }
-      );
-      Indicator.open();
-      axios.get(URI + "/pay/goodsPay?" + qs.stringify(_params)).then(res => {
-        Indicator.close();
-        let _data = res.data;
-        if(_data.success){
-            this.$route.push('/my-order')
-        }
-        Toast(_data.msg);
 
-        // this.GoodsList = _data.pages;
-        // this.totalCount = _data.totalCount;
-        // this.loading = false;
-      });
+    usePasswordPayCallback() {
+      console.log("密码正确callback");
+      this.usePayPassword = false;
+      if (this.showBuyType == "brand") {
+        let _params = Object.assign(
+          this.order,
+          { type: this.payType },
+          { message: this.feedback },
+          { addressId: this.defaultAddress.addressId }
+        );
+        Indicator.open();
+        axios.get(URI + "/pay/goodsPay?" + qs.stringify(_params)).then(res => {
+          Indicator.close();
+          let _data = res.data;
+          if (_data.success) {
+            this.$router.push("/my-order");
+          }
+          Toast(_data.msg);
+        });
+      } else if (this.showBuyType == "cart") {
+        let _params = Object.assign(
+          { cartIds: this.selectedCartId.join(",") },
+          { type: this.payType },
+          { message: this.feedback },
+          { addressId: this.defaultAddress.addressId },
+          { uid: this.uid }
+        );
+        Indicator.open();
+        axios
+          .get(URI + "/pay/cartGoodsPay?" + qs.stringify(_params))
+          .then(res => {
+            Indicator.close();
+            let _data = res.data;
+            if (_data.success) {
+              this.$router.push("/my-order");
+            }
+            Toast(_data.msg);
+          });
+      }
+    },
+
+    sumbit() {
+      if (this.defaultAddress.addressId == null) {
+        Toast(`请先添加收货地址`);
+        return;
+      }
+      if (this.payType == 1) {
+        this.usePayPassword = true;
+        return;
+      }
+
+      if (this.showBuyType == "brand") {
+        let _params = Object.assign(
+          this.order,
+          { type: this.payType },
+          { message: this.feedback },
+          { addressId: this.defaultAddress.addressId }
+        );
+        Indicator.open();
+        axios.get(URI + "/pay/goodsPay?" + qs.stringify(_params)).then(res => {
+          Indicator.close();
+          let _data = res.data;
+          if (_data.success) {
+            this.$router.push("/my-order");
+          }
+          Toast(_data.msg);
+        });
+      } else if (this.showBuyType == "cart") {
+        let _params = Object.assign(
+          { cartIds: this.selectedCartId.join(",") },
+          { type: this.payType },
+          { message: this.feedback },
+          { addressId: this.defaultAddress.addressId },
+          { uid: this.uid }
+        );
+        Indicator.open();
+        axios
+          .get(URI + "/pay/cartGoodsPay?" + qs.stringify(_params))
+          .then(res => {
+            Indicator.close();
+            let _data = res.data;
+            if (_data.success) {
+              this.$router.push("/my-order");
+            }
+            Toast(_data.msg);
+          });
+      }
     }
   },
 
   components: {
-    TabBar
+    TabBar,
+    PayCheck
   }
 };
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.black_bg {
+  display: block;
+}
 .add-add {
   margin-top: 45px !important;
+}
+#order-set .click-set {
+  height: 200px;
 }
 </style>

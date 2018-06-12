@@ -588,6 +588,61 @@ body{
 #details .swiper-container img{
 	width: 100%;
 }
+#details .bd-iphone{
+	width: 250px;
+	height: 194px;
+	background-color: #ffffff;
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin: auto;
+	z-index: 99;
+	border-radius: 5px;
+}
+#details .bd-iphone span{
+	display: block;
+	text-align: center;
+	color: #2c2c2c;
+	padding-top: 10px;
+	line-height: 40px;
+	font-size: 1.4rem;
+}
+#details .bd-iphone .input-box{
+	width: 210px;
+	margin-left: auto;
+	margin-right: auto;
+}
+#details .bd-iphone .input-box input{
+	width: 200px;
+	background-color: #f5f5f5;
+	height: 34px;
+	border: none;
+	border-radius: 4px;
+	padding-left: 10px;
+	font-size: 1.3rem;
+	margin-bottom: 10px;
+}
+#details .bd-iphone button{
+	width: 123px;
+	text-align: center;
+	border: none;
+	margin-top: 20px;
+	line-height: 34px;
+	background-color: #ffffff;
+	font-size: 1.3rem;
+}
+.width-110{
+	width: 110px !important;
+}
+.width-80{
+	width: 80px !important;
+	text-align: center;
+	padding: 0 !important;
+	background-color: #A82D2D !important;
+	color: #ffffff;
+}
 #details .details-title{
 	width: 88%;
 	padding: 12px;
@@ -2742,34 +2797,3 @@ textarea:-ms-input-placeholder{
 	font-size: 1.5rem;
 	border: none;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

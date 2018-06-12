@@ -3,15 +3,17 @@
         <div class="my-top">
             <div class="box">
                 <div class="header-box" v-show="account.avatar">
-                    <img v-lazy="WWW + '/' + account.avatar" alt="">
+                    <img v-lazy="account.headimgurl" alt="">
                 </div>
                 <div class="name-box S4 C8">
-                    <h2>{{account.loginName}}</h2>
+                    <h2>{{account.nickname}}</h2>
                     <span>ID:
-                        <em>{{uid}}</em>
+                        <em>{{account.loginName }}</em>
                     </span>
                 </div>
-                <img class="set-up" src="static/img/set-up@2x.png" alt="">
+                <router-link to="/my/set-password">
+                    <img class="set-up" src="static/img/set-up@2x.png" alt="">
+                </router-link>
             </div>
         </div>
         <div class="account text-center">
@@ -39,13 +41,16 @@
             </div>
         </router-link>
 
-        <div class="my-table">
-            <div class="table">
-                <img src="static/img/share@2x.png" alt="">
-                <span class="C3 S4">分享奖励</span>
-                <img class="next" src="static/img/icon_next@2x.png" alt="">
+        <router-link to="/my/share">
+            <div class="my-table">
+                <div class="table">
+                    <img src="static/img/share@2x.png" alt="">
+                    <span class="C3 S4">分享奖励</span>
+                    <img class="next" src="static/img/icon_next@2x.png" alt="">
+                </div>
             </div>
-        </div>
+        </router-link>
+
         <router-link to="/my/about">
             <div class="my-table">
                 <div class="table">
@@ -69,10 +74,11 @@ import {
   Indicator,
   Toast,
   Lazyload,
-  InfiniteScroll
+  InfiniteScroll,
+  MessageBox
 } from "mint-ui";
 import Vue from "vue";
-import { URI, WWW } from "@/apiConfig";
+import { URI, WWW, getToken } from "@/apiConfig";
 import axios from "axios";
 import TabBar from "./TabBar";
 import qs from "qs";
@@ -80,7 +86,7 @@ Vue.use(Lazyload);
 Vue.use(InfiniteScroll);
 Vue.component(Swipe.name, Swipe);
 Vue.component(SwipeItem.name, SwipeItem);
-let uid = `1fb004b2cbe54c0b92bcab3cb58ad9c3`;
+
 export default {
   name: "Mine",
 
@@ -95,7 +101,7 @@ export default {
       loading: false,
       goodsAttr: {},
       account: {},
-      uid
+      uid: getToken()
     };
   },
 
@@ -104,10 +110,11 @@ export default {
   mounted() {
     // console.log(this.$route.params.id, "$route.params.id");
     let _params = {
-      uid: uid
+      uid: this.uid
     };
-    Indicator.open();
+    // Indicator.open();
     // 初始化个人信息中心
+    // MessageBox('提示', 'getToken()'+getToken());
     axios.get(URI + "/user/userCenter?" + qs.stringify(_params)).then(res => {
       Indicator.close();
       let _data = res.data.data;
@@ -152,7 +159,7 @@ export default {
     addCart() {
       let _params = {
         gid: this.$route.params.id,
-        uid: uid,
+        uid: this.uid,
         type: 2,
         num: this.num,
         title: this.goodsDetails.title

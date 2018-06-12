@@ -35,7 +35,7 @@
                             <div class="number">
                                 <span class="C9 S1 fl-l">
                                     <em class="S5">¥</em>{{cart.price}}</span>
-                                <div class="number-btn fl-r" v-show="cartStatus == false" >
+                                <div class="number-btn fl-r" v-show="cartStatus == false">
                                     <img @click="changeNum('-',item.bid,cart.cardId,index)" src="static/img/btn_jian@2x.png" alt="">
                                     <span class="S4 C3">{{cart.num}}</span>
                                     <img @click="changeNum('+',item.bid,cart.cardId,index)" src="static/img/btn_jia@2x.png" alt="">
@@ -98,14 +98,14 @@ import {
   InfiniteScroll
 } from "mint-ui";
 import Vue from "vue";
-import { URI, WWW } from "@/apiConfig";
+import { URI, WWW, getToken } from "@/apiConfig";
 import axios from "axios";
 import TabBar from "./TabBar";
 import qs from "qs";
 import { remove } from "lodash";
 Vue.use(Lazyload);
 Vue.use(InfiniteScroll);
-let uid = `1fb004b2cbe54c0b92bcab3cb58ad9c3`;
+
 export default {
   name: "Cart",
 
@@ -113,7 +113,7 @@ export default {
     return {
       cartGoodList: [],
       WWW,
-      uid,
+      uid: getToken(),
       loading: false,
       cartStatus: false, // 购物车是否在编辑状态
       selectedCartId: [],
@@ -269,22 +269,18 @@ export default {
         Toast(`请勾选要结算的产品`);
         return;
       }
-      // Indicator.open()
-      // axios
-      // .get(URI + "/cart/delCartGoods?" + qs.stringify(_params))
-      // .then(res => {
-      //     Indicator.open()
-      //   let _data = res.data;
-      //   if (_data.success) {
-      //     this.fetchData();
-      //     this.selectedCartId = [];
-      //   }
-      //   Toast(_data.msg);
-      // });
+      let { selectedCartData, selectedCartId } = this;
+      let _params = {
+        type: "cart",
+        selectedCartData,
+        selectedCartId
+      };
+      window.localStorage.setItem("order", JSON.stringify(_params));
+      this.$router.push({ name: "OrderSet", params: _params });
     },
 
     toggleCheckAll() {
-        // 全选 / 全不选
+      // 全选 / 全不选
       this.isCheckAll = !this.isCheckAll;
       if (this.isCheckAll) {
         let _selectedCartId = [];
@@ -304,7 +300,7 @@ export default {
     },
 
     toggleBrand(item) {
-        // 选择品牌全选、全不选
+      // 选择品牌全选、全不选
       console.log(item);
       let _selectedCartId = this.selectedCartId.concat([]);
       let _selectedCartData = [];

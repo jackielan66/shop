@@ -5,9 +5,18 @@
         <div class="brand_nav">
             <ul class="brand_nav_top">
                 <li class="S2 C6" @click="toggleMenu">品牌分类</li>
-                <li class="S2" v-bind:class="type == 1 ? 'C6' : 'C3'" @click="searchUseType(1)">销量</li>
+                <li class="S2" v-bind:class="type == 1 ? 'C6' : 'C3'" @click="searchUseType(1)">
+                    <span>销量</span>
+                    <img v-show="direction == null || type == 0 " src="static/img/screen-off@2x.png" alt="">
+                    <img v-show="type === 1 && direction == 1" src="static/img/screen-up@2x.png" alt="">
+                    <img v-show="type === 1 && direction == 0" src="static/img/screen-down@2x.png" alt="">
+                </li>
                 <li class="S2" v-bind:class="type == 0 ? 'C6' : 'C3'" @click="searchUseType(0)">
-                    <span>价格</span><img src="" alt=""></li>
+                    <span>价格</span>
+                    <img v-show="direction == null || type == 1" src="static/img/screen-off@2x.png" alt="">
+                    <img v-show="type === 0 && direction == 1" src="static/img/screen-up@2x.png" alt="">
+                    <img v-show="type === 0 && direction == 0" src="static/img/screen-down@2x.png" alt="">
+                </li>
                 <div class="clearfix"></div>
             </ul>
             <div class="tow-nav" v-show="isMenuShow">
@@ -140,12 +149,21 @@ export default {
       this.fetchData();
     },
 
-    searchUseType(type){
-        this.type=type;
-        this.pageIndex=1;
+    searchUseType(type) {
+      if (type != this.type) {
+        this.type = type;
         this.direction = 1;
-        this.GoodsList = [];
-        this.fetchData();
+      } else if (type == this.type) {
+        if (this.direction == 0) {
+          this.direction = 1;
+        } else if (this.direction == 1) {
+          this.direction = 0;
+        }
+      }
+
+      this.pageIndex = 1;
+      this.GoodsList = [];
+      this.fetchData();
     },
 
     fetchData() {
@@ -203,5 +221,11 @@ export default {
 <style scoped>
 .brand_nav .tow-nav {
   display: block;
+}
+.brand_nav_top img {
+  width: 12px;
+  position: relative;
+  top: 5px;
+  left: 5px;
 }
 </style>

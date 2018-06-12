@@ -37,10 +37,10 @@
             <div class="price">
                 <span class="S2 C3">单价：
                     <em class="C1 S5">￥
-                        <span class="S7">{{goodsDetails.originalPrice}}</span>
+                        <span class="S7">{{goodsDetails.discountprice }}</span>
                     </em>
                     <em class="C2 S5 text-unline">￥
-                        <span class="S2">{{goodsDetails.discountprice}}</span>
+                        <span class="S2">{{goodsDetails.originalPrice}}</span>
                     </em>
                 </span>
             </div>
@@ -60,11 +60,11 @@
             </div>
             <div class="button-nav S1 C4">
                 <ul>
-                    <li class="width-15" @click="$router.push('/')">
+                    <li class="width-15" @click="$router.push('/home')">
                         <img src="static/img/icon_home@2x.png" alt="">
                         <h2 class="S6">首页</h2>
                     </li>
-                    <li class="width-15">
+                    <li class="width-15" @click="$router.push('/brand/'+goodsDetails.brand.bid)">
                         <img src="static/img/icon_Supermarket@2x.png" alt="">
                         <h2 class="S6">店铺</h2>
                     </li>
@@ -117,6 +117,8 @@
                 </div>
             </div>
         </div>
+        <!-- 绑定手机弹窗 -->
+        <details-bind-phone @bindPhoneCallback="bindPhoneCallback" v-if="showPhoneModal"></details-bind-phone>
     </div>
 
 </template>
@@ -131,15 +133,16 @@ import {
   InfiniteScroll
 } from "mint-ui";
 import Vue from "vue";
-import { URI, WWW } from "@/apiConfig";
+import { URI, WWW, getToken } from "@/apiConfig";
 import axios from "axios";
 import TabBar from "./TabBar";
+import DetailsBindPhone from "./DetailsBindPhone";
 import qs from "qs";
 Vue.use(Lazyload);
 Vue.use(InfiniteScroll);
 Vue.component(Swipe.name, Swipe);
 Vue.component(SwipeItem.name, SwipeItem);
-let uid = `1fb004b2cbe54c0b92bcab3cb58ad9c3`;
+
 export default {
   name: "Details",
 
@@ -151,9 +154,11 @@ export default {
       num: 1,
       WWW,
       URI,
+      uid: getToken(),
       loading: false,
       goodsAttr: {},
-      isJoinCart: 0
+      isJoinCart: 0,
+      showPhoneModal: false
     };
   },
 
@@ -161,16 +166,18 @@ export default {
 
   mounted() {
     // console.log(this.$route.params.id, "$route.params.id");
+    // window.location = "#top";
+    window.scrollTo(0, 0);
     let _params = {
       gid: this.$route.params.id,
-      uid: uid,
+      // uid: this.uid,
       type: 2
     };
     Indicator.open();
     // 初始化商品列表信息
     axios.get(URI + "/goods/detail?" + qs.stringify(_params)).then(res => {
       Indicator.close();
-      let _data = res.data.data;
+      let _data = res.data.data || {};
       this.goodsDetails = _data;
       if (_data.goodsDetailImg) {
         this.goodsDetailImg = _data.goodsDetailImg.split(",");
@@ -180,6 +187,10 @@ export default {
 
   methods: {
     onJoinCart(type) {
+      if (!this.uid) {
+        this.showPhoneModal = true;
+        return;
+      }
       this.toggleBuyMenu = !this.toggleBuyMenu;
       this.isJoinCart = type;
       this.getGoodInfo();
@@ -221,22 +232,24 @@ export default {
 
     goOrder() {
       let _params = {
+        type: "brand",
         order: {
           gid: this.$route.params.id,
-          uid: uid,
+          uid: this.uid,
           type: 2,
           num: this.num,
           title: this.goodsDetails.title
         },
         goodsDetails: this.goodsDetails
       };
+      window.localStorage.setItem("order", JSON.stringify(_params));
       this.$router.push({ name: "OrderSet", params: _params });
     },
 
     addCart() {
       let _params = {
         gid: this.$route.params.id,
-        uid: uid,
+        uid: this.uid,
         type: 2,
         num: this.num,
         title: this.goodsDetails.title
@@ -264,11 +277,16 @@ export default {
       //   }
       //   this.loading = false;
       // }, 2500);
+    },
+    bindPhoneCallback() {
+      console.log("绑定手机回调");
+      this.showPhoneModal = false;
     }
   },
 
   components: {
-    TabBar
+    TabBar,
+    DetailsBindPhone
   }
 };
 </script>
@@ -277,5 +295,8 @@ export default {
 <style scoped>
 #details .attribute {
   display: block;
+}
+.details-img {
+  margin-bottom: 50px;
 }
 </style>
