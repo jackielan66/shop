@@ -47,7 +47,7 @@
             <hr>
             <div class="freight">
                 <span class="S2 C3">运费：
-                    <em>10</em>
+                    <em>0</em>
                 </span>
             </div>
             <div class="text-top S7 C3">
@@ -187,7 +187,8 @@ export default {
 
   methods: {
     onJoinCart(type) {
-      if (!this.uid) {
+      let uid = getToken();
+      if (!uid) {
         this.showPhoneModal = true;
         return;
       }
@@ -235,7 +236,7 @@ export default {
         type: "brand",
         order: {
           gid: this.$route.params.id,
-          uid: this.uid,
+          uid: getToken(),
           type: 2,
           num: this.num,
           title: this.goodsDetails.title
@@ -249,7 +250,7 @@ export default {
     addCart() {
       let _params = {
         gid: this.$route.params.id,
-        uid: this.uid,
+        uid: getToken(),
         type: 2,
         num: this.num,
         title: this.goodsDetails.title

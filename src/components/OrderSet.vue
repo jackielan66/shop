@@ -55,14 +55,14 @@
                     </div>
                     <div class="clearfix"></div>
                     <span class="money S10 C3">¥
-                        <em class="S4">{{goodsDetails.price}}</em>
+                        <em class="S4">{{goodsDetails.discountprice}}</em>
                     </span>
                 </div>
             </div>
             <div class="cost">
                 <span class="fl-l S4 C3">邮费</span>
                 <span class="fl-r S4 C3">
-                    <em class="S10">¥</em>10.00</span>
+                    <em class="S10">¥</em>0.00</span>
                 <div class="clearfix"></div>
             </div>
             <div class="cost">
@@ -226,7 +226,7 @@ export default {
       order: {},
       WWW,
       loading: true,
-      uid:getToken(),
+      uid: getToken(),
       amount: 0,
       payType: 1,
       feedback: "",
@@ -249,9 +249,9 @@ export default {
   created() {},
 
   mounted() {
-    window.scrollTo(0,0);
+    window.scrollTo(0, 0);
     let _params = {
-      uid:this.uid
+      uid: this.uid
     };
     // 初始化默认地址
     axios
@@ -272,7 +272,7 @@ export default {
         this.$route.back();
         return;
       }
-      this.amount = this.order.num * this.goodsDetails.price;
+      this.amount = this.order.num * this.goodsDetails.discountprice;
     } else if (params.type == "cart") {
       this.selectedCartData = params.selectedCartData;
       this.selectedCartId = params.selectedCartId;
@@ -347,14 +347,83 @@ export default {
           this.order,
           { type: this.payType },
           { message: this.feedback },
-          { addressId: this.defaultAddress.addressId }
+          { addressId: this.defaultAddress.addressId },
+          { fromType: "WXGZH" }
         );
         Indicator.open();
         axios.get(URI + "/pay/goodsPay?" + qs.stringify(_params)).then(res => {
           Indicator.close();
           let _data = res.data;
           if (_data.success) {
-            this.$router.push("/my-order");
+            let _WXPay = _data.data.WXPay;
+
+            // 写死测试
+            // console.log(_WXPay, "_WXPay");
+            // var appId, timeStamp, nonceStr, package2, signType, paySign;
+
+            // appId = "wxaef4cedcb3731abb"
+            // timeStamp = "1529399335";
+            // nonceStr = "5030dfa57d204a0a9b406f559bb964b8";
+            // package2 = "prepay_id=wx191708550349739ca6f15b2d1608556026"
+            // signType = "MD5";
+            // paySign = "77D6B9E936698158B006971EBB62C7DD";
+            // if (typeof WeixinJSBridge !== "undefined") {
+            //   WeixinJSBridge.invoke(
+            //     "getBrandWCPayRequest",
+            //     {
+            //       appId: appId, //公众号名称,由商户传入
+            //       timeStamp: timeStamp, //时间戳,自1970年以来的秒数
+            //       nonceStr: nonceStr, //随机串
+            //       package: package2,
+            //       signType: signType, //微信签名方式：
+            //       paySign: paySign //微信签名
+            //     },
+            //     function(res) {
+            //       if (res.err_msg == "get_brand_wcpay_request:ok") {
+            //         console.log("支付成功");
+            //         //支付成功后跳转的页面
+            //       } else if (res.err_msg == "get_brand_wcpay_request:cancel") {
+            //         console.log("支付取消");
+            //       } else if (res.err_msg == "get_brand_wcpay_request:fail") {
+            //         console.log("支付失败");
+            //         alert(JSON.stringify(res));
+            //         //               WeixinJSBridge.call('closeWindow');
+            //       } //使用以上方式判断前端返回,微信团队郑重提示：res.err_msg将在用户支付成功后返回ok,但并不保证它绝对可靠。
+            //     }
+            //   );
+            // }
+
+            // 写死end
+
+            WeixinJSBridge.invoke(
+              "getBrandWCPayRequest",
+              {
+                appId: WXPay.appId, //公众号名称,由商户传入
+                timeStamp: WXPay.timeStamp, //时间戳,自1970年以来的秒数
+                nonceStr: WXPay.nonceStr, //随机串
+                package: WXPay.package2,
+                signType: WXPay.signType, //微信签名方式：
+                paySign: WXPay.paySign //微信签名
+              },
+              __res => {
+                alert(JSON.stringify(__res));
+                if (__res.err_msg == "get_brand_wcpay_request:ok") {
+                  Toast("支付成功");
+                  this.$router.push("/my-order");
+                  // console.log("支付成功");
+                  //支付成功后跳转的页面
+                } else if (__res.err_msg == "get_brand_wcpay_request:cancel") {
+                  console.log("支付取消");
+                  alert(JSON.stringify(__res));
+                } else if (__res.err_msg == "get_brand_wcpay_request:fail") {
+                  console.log("支付失败");
+                  alert(JSON.stringify(__res));
+                  //               WeixinJSBridge.call('closeWindow');
+                } //使用以上方式判断前端返回,微信团队郑重提示：res.err_msg将在用户支付成功后返回ok,但并不保证它绝对可靠。
+              }
+            );
+
+            // this.$router.push("/my-order");
           }
           Toast(_data.msg);
         });
@@ -364,7 +433,8 @@ export default {
           { type: this.payType },
           { message: this.feedback },
           { addressId: this.defaultAddress.addressId },
-          { uid: this.uid }
+          { uid: this.uid },
+          { fromType: "WXGZH" }
         );
         Indicator.open();
         axios
@@ -373,7 +443,38 @@ export default {
             Indicator.close();
             let _data = res.data;
             if (_data.success) {
-              this.$router.push("/my-order");
+              let _WXPay = _data.data.WXPay;
+              //   alert(_WXPay)
+              WeixinJSBridge.invoke(
+                "getBrandWCPayRequest",
+                {
+                  appId: WXPay.appId, //公众号名称,由商户传入
+                  timeStamp: WXPay.timeStamp, //时间戳,自1970年以来的秒数
+                  nonceStr: WXPay.nonceStr, //随机串
+                  package: WXPay.package2,
+                  signType: WXPay.signType, //微信签名方式：
+                  paySign: WXPay.paySign //微信签名
+                },
+                __res => {
+                  alert(JSON.stringify(__res));
+                  if (__res.err_msg == "get_brand_wcpay_request:ok") {
+                    Toast("支付成功");
+                    this.$router.push("/my-order");
+                    // console.log("支付成功");
+                    //支付成功后跳转的页面
+                  } else if (
+                    __res.err_msg == "get_brand_wcpay_request:cancel"
+                  ) {
+                    console.log("支付取消");
+                    alert(JSON.stringify(__res));
+                  } else if (__res.err_msg == "get_brand_wcpay_request:fail") {
+                    console.log("支付失败");
+                    alert(JSON.stringify(__res));
+                    //               WeixinJSBridge.call('closeWindow');
+                  } //使用以上方式判断前端返回,微信团队郑重提示：res.err_msg将在用户支付成功后返回ok,但并不保证它绝对可靠。
+                }
+              );
+              //   this.$router.push("/my-order");
             }
             Toast(_data.msg);
           });

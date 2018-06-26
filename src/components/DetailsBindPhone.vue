@@ -6,7 +6,7 @@
             <div class="input-box">
                 <input type="text" v-model="phone" placeholder="请输入手机号码" name="">
                 <input class="width-110 fl-l" v-model="code" type="text" placeholder="请输入验证码" name="">
-                <input class="width-80 fl-r" value="获取验证码" @click="getCode" type="button" name="">
+                <input class="width-80 fl-r" v-bind:disabled="isBtnDisabled" v-bind:value="btnValue" @click="getCode" type="button" name="">
                 <div class="clearfix"></div>
             </div>
             <button class="C3" type="" @click="submit(0)"> 取消</button>
@@ -49,7 +49,10 @@ export default {
       account: {},
       phone: "",
       code: "",
-      recommendCode: ""
+      recommendCode: "",
+      time: 60,
+      isBtnDisabled: false,
+      btnValue: `获取验证码`
     };
   },
 
@@ -77,6 +80,21 @@ export default {
       axios.get(URI + "/user/sendMsg?" + qs.stringify(_params)).then(res => {
         let _data = res.data;
         Toast(_data.msg);
+        if (_data.success) {
+          this.isBtnDisabled = true;
+          let That = this;
+          let _time = window.setInterval(() => {
+            That.time = That.time - 1;
+            if (That.time > 0) {
+              That.btnValue = That.time;
+            } else {
+              this.isBtnDisabled = false;
+              That.btnValue = `获取验证码`;
+              That.time  = 60;
+              window.clearInterval(_time)
+            }
+          }, 1000);
+        }
       });
     },
     submit(type) {
